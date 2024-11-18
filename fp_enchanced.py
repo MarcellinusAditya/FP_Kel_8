@@ -124,7 +124,8 @@ bias_rgb = np.random.randn(3)
 
 # Data latihan 
 x_train, y_train = import_image('Data Kentang/Training')
-
+print(x_train)
+print(y_train)
 # Latih model dengan dataset
 weights_rgb, bias_rgb = train(x_train, y_train, kernel_rgb, weights_rgb, bias_rgb, epochs=10, learning_rate=0.01)
 

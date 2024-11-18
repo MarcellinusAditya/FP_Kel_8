@@ -16,7 +16,8 @@ def import_image(folder_path):
                 img_path = os.path.join(root, file)
                 img = cv2.imread(img_path)
                 img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                images_array.append(img_rgb)
+                img_resized = cv2.resize(img_rgb, (64, 64))
+                images_array.append(normalitation(img_resized))
 
                 # Menggunakan nama folder sebagai label
                 label = os.path.basename(root)
@@ -58,14 +59,14 @@ def softmax(x):
     return exp_x / np.sum(exp_x)
 
 def forward_pass(image, kernel, weights, bias):
-    image = normalitation(image)
+    
     conv_output = conv2d(image, kernel)
     pooled_output = max_pooling(conv_output)
     conv_output = conv2d(pooled_output, kernel)
     pooled_output = max_pooling(conv_output)
     flattened_output = pooled_output.flatten()
     dense_output = dense(flattened_output, weights, bias)
-    return softmax(dense_output)
+    return softmax(dense_output), flattened_output
 
 def cross_entropy_loss(predictions, targets):
     epsilon = 1e-10
@@ -76,7 +77,8 @@ def backward_pass(weights, bias, predictions, targets, flattened_output, learnin
     error = predictions - targets
     weights_gradient = np.outer(flattened_output, error)
     bias_gradient = error
-    weights_gradient=weights_gradient[:12288, :]
+    assert weights_gradient.shape == weights.shape, "Gradient dimensions do not match weights"
+    # weights_gradient=weights_gradient[:768, :]
     weights -= learning_rate * weights_gradient
     bias -= learning_rate * bias_gradient
     return weights, bias
@@ -87,7 +89,10 @@ def train(images, labels, kernel, weights, bias, epochs=10, learning_rate=0.01):
         correct_predictions = 0
 
         for i in range(len(images)):
-            probabilities = forward_pass(images[i], kernel, weights, bias)
+            
+            # print(f"Flattened input size: {flattened_size}")
+            # print(f"Weights shape: {weights.shape}")
+            probabilities, flattened_output= forward_pass(images[i], kernel, weights, bias)
             loss = cross_entropy_loss(probabilities, labels[i])
             total_loss += loss
             predicted_class = np.argmax(probabilities)
@@ -102,7 +107,7 @@ def train(images, labels, kernel, weights, bias, epochs=10, learning_rate=0.01):
             if predicted_class == actual_class:
                 correct_predictions += 1
 
-            weights, bias = backward_pass(weights, bias, probabilities, labels[i], images[i].flatten(), learning_rate)
+            weights, bias = backward_pass(weights, bias, probabilities, labels[i], flattened_output, learning_rate)
 
         accuracy = correct_predictions / len(images)
         print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss}, Accuracy: {accuracy*100}%")
@@ -113,8 +118,8 @@ def test(images, labels, kernel, weights, bias):
     correct_predictions = 0
 
     for i in range(len(images)):
-        probabilities = forward_pass(images[i], kernel, weights, bias)
-        predicted_class = np.argmax(probabilities)
+        probabilities, flat = forward_pass(images[i], kernel, weights, bias)
+        predicted_class= np.argmax(probabilities)
         actual_class = np.argmax(labels[i])
 
         if predicted_class == actual_class:
@@ -124,8 +129,8 @@ def test(images, labels, kernel, weights, bias):
     print(f"Test Accuracy: {accuracy*100}%")
 
 # Inisialisasi kernel, bobot, dan bias secara acak
-kernel_rgb = np.random.randn(3, 3)
-weights_rgb = np.random.randn(12288, 3)
+kernel_rgb = np.random.randn(3, 3) 
+weights_rgb = np.random.randn(768, 3) 
 bias_rgb = np.random.randn(3)
 
 folder_path = "Data Kentang All"
@@ -148,7 +153,7 @@ for label, count in zip(unique_labels, counts):
 y_train=encode_labels(y_train)
 y_test=encode_labels(y_test)
 
-print(y_test)
+
 print("Jumlah data training:", len(x_train))
 print("Jumlah data testing:", len(x_test))
 
