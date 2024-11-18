@@ -159,6 +159,8 @@ def train(images, labels, kernel, weights, bias, epochs=10, learning_rate=0.01):
             # Backward pass untuk memperbarui bobot
             weights, bias = backward_pass(weights, bias, probabilities, labels[i], images[i].flatten(), learning_rate)
 
+            
+
         # Hitung akurasi
     
         accuracy = correct_predictions / len(images)
