@@ -152,7 +152,7 @@ def visualize_accuracy(train_accuracies, test_accuracies):
 kernel_rgb = np.random.randn(3, 3) 
 weights_rgb = np.random.randn(3072, 3) 
 bias_rgb = np.random.randn(3)
-
+epochs=20
 folder_path = "Data Kentang All"
 
 images, labels = import_image(folder_path)
@@ -160,7 +160,7 @@ print("Jumlah data:", len(images))
 
 
 x_train, x_test, y_train, y_test = train_test_split(
-    images, labels, test_size=0.01, random_state=0, stratify=labels
+    images, labels, test_size=0.1, random_state=0, stratify=labels
 )
 
 unique_labels, counts = np.unique(y_train, return_counts=True)
@@ -178,7 +178,7 @@ print("Jumlah data training:", len(x_train))
 print("Jumlah data testing:", len(x_test))
 
 # Latih model dengan dataset
-weights_rgb, bias_rgb = train(x_train, y_train,x_test, y_test, kernel_rgb, weights_rgb, bias_rgb, epochs=10, learning_rate=0.001)
+weights_rgb, bias_rgb = train(x_train, y_train,x_test, y_test, kernel_rgb, weights_rgb, bias_rgb, epochs, learning_rate=0.001)
 
 
 # Uji model setelah pelatihan
