@@ -2,6 +2,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import cv2
 import os
+import matplotlib.pyplot as plt
 
 def normalitation(input):
     return input / 255.0
@@ -16,7 +17,7 @@ def import_image(folder_path):
                 img_path = os.path.join(root, file)
                 img = cv2.imread(img_path)
                 img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                img_resized = cv2.resize(img_rgb, (64, 64))
+                img_resized = cv2.resize(img_rgb, (128, 128))
                 images_array.append(normalitation(img_resized))
 
                 # Menggunakan nama folder sebagai label
@@ -83,11 +84,12 @@ def backward_pass(weights, bias, predictions, targets, flattened_output, learnin
     bias -= learning_rate * bias_gradient
     return weights, bias
 
-def train(images, labels, kernel, weights, bias, epochs=10, learning_rate=0.01):
+def train(images, labels,x_test, y_test, kernel, weights, bias, epochs=10, learning_rate=0.01):
+    epoch_accuracies = []
+    test_accuracies = []
     for epoch in range(epochs):
         total_loss = 0
         correct_predictions = 0
-
         for i in range(len(images)):
             
             # print(f"Flattened input size: {flattened_size}")
@@ -110,8 +112,11 @@ def train(images, labels, kernel, weights, bias, epochs=10, learning_rate=0.01):
             weights, bias = backward_pass(weights, bias, probabilities, labels[i], flattened_output, learning_rate)
 
         accuracy = correct_predictions / len(images)
-        print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss}, Accuracy: {accuracy*100}%")
+        epoch_accuracies.append(accuracy)
+        print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss}, Accuracy: {accuracy*100}%", end=' ')
+        test_accuracies.append(test(x_test, y_test, kernel, weights, bias))
 
+    visualize_accuracy(epoch_accuracies, test_accuracies)
     return weights, bias
 
 def test(images, labels, kernel, weights, bias):
@@ -127,10 +132,25 @@ def test(images, labels, kernel, weights, bias):
 
     accuracy = correct_predictions / len(images)
     print(f"Test Accuracy: {accuracy*100}%")
+    return accuracy
 
+def visualize_accuracy(train_accuracies, test_accuracies):
+    epochs = range(1, len(train_accuracies) + 1)
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(epochs, train_accuracies, label='Train Accuracy', color='blue')
+    plt.plot(epochs, test_accuracies, label='Test Accuracy', color='green')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.title('Train & Test Accuracy')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 # Inisialisasi kernel, bobot, dan bias secara acak
+# kernel_rgb = np.random.normal(0, 0.1, (3, 3))
+# weights_rgb = np.random.normal(0, 0.1,(3072, 3)) 
 kernel_rgb = np.random.randn(3, 3) 
-weights_rgb = np.random.randn(768, 3) 
+weights_rgb = np.random.randn(3072, 3) 
 bias_rgb = np.random.randn(3)
 
 folder_path = "Data Kentang All"
@@ -140,7 +160,7 @@ print("Jumlah data:", len(images))
 
 
 x_train, x_test, y_train, y_test = train_test_split(
-    images, labels, test_size=0.1, random_state=42, stratify=labels
+    images, labels, test_size=0.01, random_state=0, stratify=labels
 )
 
 unique_labels, counts = np.unique(y_train, return_counts=True)
@@ -158,11 +178,11 @@ print("Jumlah data training:", len(x_train))
 print("Jumlah data testing:", len(x_test))
 
 # Latih model dengan dataset
-weights_rgb, bias_rgb = train(x_train, y_train, kernel_rgb, weights_rgb, bias_rgb, epochs=10, learning_rate=0.01)
+weights_rgb, bias_rgb = train(x_train, y_train,x_test, y_test, kernel_rgb, weights_rgb, bias_rgb, epochs=10, learning_rate=0.001)
 
 
 # Uji model setelah pelatihan
-test(x_test, y_test, kernel_rgb, weights_rgb, bias_rgb)
+# test(x_test, y_test, kernel_rgb, weights_rgb, bias_rgb)
 
 
 
